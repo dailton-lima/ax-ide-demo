@@ -337,7 +337,8 @@
     const n=network(project());if(!n.enabled)return oldManifest();
     const plan=distributedPlan();
     return {schema:2,mode:'distributed',coordinator_id:n.coordinatorId,
-      topology:n.hubs.map(h=>({id:h.id,name:h.name,role:h.role,ports:[...portsForHub(project(),h.id)]})),
+      target:{profile:AXIOMA_HARDWARE_PROFILE.id,profile_version:AXIOMA_HARDWARE_PROFILE.version,requires:['can.multi_hub']},
+      topology:n.hubs.map(h=>({id:h.id,name:h.name,role:h.role,profile:AXIOMA_HARDWARE_PROFILE.id,capabilities:[...AXIOMA_HARDWARE_PROFILE.capabilities],ports:[...portsForHub(project(),h.id)]})),
       ports:[...project().config],ports_by_hub:n.hubs.map(h=>({hub_id:h.id,ports:[...portsForHub(project(),h.id)]})),assets:{audio:[...audio.keys()],images:[...images.keys()]},
       compiler:{version:2,status:plan?.error?'invalid':'partitioned',executable:false},plan,ready:false};
   };

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Axioma Studio</title>
 <script src="vendor/blockly/blockly.min.js"></script><script src="vendor/blockly/pt-br.js"></script><script src="vendor/blockly/python_compressed.js"></script><script>
+window.AXIOMA_HARDWARE_PROFILE={id:'axioma-hub-base-v1',version:1,capabilities:['motor.dc.open_loop.4','motor.brake_coast','motion.timed','servo.position.2','sensor.port.6','imu.6axis','imu.heading','display.rgb.320x240','audio.pcm','can.multi_hub','usb.device'],hardware:{motors:4,motor_encoder:false,motor_connector_pins:2,servos:2,sensor_ports:6,can:true,imu:'BMI270',display:'ST7789T3-320x240'}};
 // Renderizador Axioma: booleans usam um hexágono amplo; valores comuns usam conexão retangular.
 class AxiomaConnectionConstants extends Blockly.blockRendering.ConstantProvider{
   makeHexagonal(){
@@ -63,6 +64,7 @@ async function axiomaWrite(path,data){
 function axiomaManifest(){
   return {
     schema:1,
+    target:{profile:AXIOMA_HARDWARE_PROFILE.id,profile_version:AXIOMA_HARDWARE_PROFILE.version,requires:[]},
     ports:[...project().config],
     assets:{audio:[...audio.keys()],images:[...images.keys()]}
   };
