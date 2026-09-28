@@ -47,8 +47,8 @@
   backdrop.id = 'multiHubModal';
   backdrop.innerHTML = `<div class="modal"><div class="mhead"><h2>Hubs do projeto</h2><div class="spacer"></div><button class="btn secondary" type="button" data-hub-close>Fechar</button></div><div class="mbody">
     <label class="multihub-switch"><input id="multiHubEnabled" type="checkbox"><span><b>Usar mais de um hub</b><small>Ative somente para robôs com hubs conectados pelo cabo CAN.</small></span></label>
-    <p class="notice" id="multiHubNotice">O projeto usa apenas um Axioma Block. Nenhuma configuração de rede será incluída.</p>
-    <section id="multiHubSettings" class="hidden"><div class="row"><div><b>Topologia do robô</b><div class="hub-help">Cada hub tem um ID CAN único. O hub 1 coordena a implantação, mas cada hub executa seu próprio programa.</div></div><div class="spacer"></div><button class="btn secondary" id="addHub" type="button">+ Adicionar hub</button></div><div class="hub-list" id="hubList"></div><div class="hub-monitor"><div class="row"><div><b>Monitor da conexão</b><div class="hub-help" id="hubMonitorSummary">Conecte o hub principal para verificar a rede.</div></div><div class="spacer"></div><button class="btn secondary" id="refreshHubs" type="button">Verificar agora</button></div><div id="hubMonitorList" class="hub-monitor-list"></div></div></section>
+    <p class="notice" id="multiHubNotice">O projeto usa apenas um hub EVORA. Nenhuma configuração de rede será incluída.</p>
+    <section id="multiHubSettings" class="hidden"><div class="row"><div><b>Topologia do robô</b><div class="hub-help">Cada hub tem um ID CAN único. O hub 1 coordena a implantação, mas cada hub executa seu próprio programa.</div></div><div class="spacer"></div><button class="btn secondary" id="addHub" type="button">+ Adicionar hub</button></div><div class="hub-list" id="hubList"></div><div class="hub-monitor"><div class="row"><div><b>Monitor da conexão</b><div class="hub-help" id="hubMonitorSummary">Conecte o hub principal para verificar a rede.</div></div><div class="spacer"></div><button class="btn secondary" id="refreshHubs" type="button">Verificar agora</button><button class="btn secondary" id="resumeMultiHub" type="button">Retomar envio</button><button class="btn primary" id="startMultiHub" type="button">Iniciar sincronizado</button></div><div id="hubMonitorList" class="hub-monitor-list"></div></div></section>
   </div><div class="mfoot"><button class="btn primary" id="saveMultiHub" type="button">Aplicar</button></div></div>`;
   document.body.appendChild(backdrop);
   const enabledInput = backdrop.querySelector('#multiHubEnabled');
@@ -57,6 +57,8 @@
   const list = backdrop.querySelector('#hubList');
   const monitorList=backdrop.querySelector('#hubMonitorList');
   const monitorSummary=backdrop.querySelector('#hubMonitorSummary');
+  const startMultiHub=backdrop.querySelector('#startMultiHub');
+  const resumeMultiHub=backdrop.querySelector('#resumeMultiHub');
   let draft = defaultNetwork();
   const notifySimulator=(name,detail)=>window.dispatchEvent(new CustomEvent(name,{detail}));
 
@@ -102,6 +104,7 @@
   };
 
   const stateLabel={unknown:'Não verificado',online:'Online',offline:'Offline',conflict:'Conflito de ID',incompatible:'Firmware incompatível',unexpected:'Não configurado'};
+  const actionReason={can_id_conflict:'Há conflito de ID CAN. Corrija a topologia antes de continuar.',no_deployment:'Envie o projeto para iniciar uma implantação CAN.',resume_available:'A implantação foi interrompida. Retome o envio para continuar do último trecho confirmado.',deployment_active:'Implantação em andamento · aguarde a confirmação de cada hub remoto.',awaiting_confirmation:'Implantação em andamento · aguarde a confirmação de cada hub remoto.',ready_to_start:'Todos os hubs confirmaram o módulo. O início sincronizado está liberado.'};
   function renderMonitor(report=null,error=''){
     monitorList.replaceChildren();
     const detected=new Map((report?.nodes||[]).map(node=>[Number(node.id),node]));
@@ -113,9 +116,26 @@
       monitorList.appendChild(row);
     });
     detected.forEach(node=>{const row=document.createElement('div');row.className='hub-monitor-row';row.innerHTML=`<span><b>Hub detectado</b><small>ID ${node.id} · fora deste projeto</small></span><span class="hub-state unexpected">${stateLabel.unexpected}</span>`;monitorList.appendChild(row);});
+    const remoteIds=draft.hubs.filter(hub=>hub.id!==1).map(hub=>hub.id);
+    const deployment=report?.deployment||{};
+    const readyIds=new Set((report?.deployment_results||[])
+      .filter(item=>item.package_kind===2&&item.state==='ready').map(item=>Number(item.target)));
+    const allRemoteOnline=remoteIds.every(id=>{
+      const node=(report?.nodes||[]).find(item=>Number(item.id)===id);
+      return node&&node.compatible!==false&&!node.duplicate;
+    });
+    const allConfirmed=remoteIds.every(id=>readyIds.has(id));
+    const firmwareActions=report?.actions;
+    resumeMultiHub.disabled=firmwareActions?firmwareActions.resume!==true:deployment.state!=='failed';
+    startMultiHub.disabled=firmwareActions?firmwareActions.start!==true:!(report?.deployment_session&&allRemoteOnline&&allConfirmed&&
+      (deployment.state==='idle'||deployment.state==='ready'));
     if(error)monitorSummary.textContent='Não foi possível consultar o hub principal. A topologia não foi verificada.';
     else if(!report)monitorSummary.textContent='Conecte o hub principal para verificar a rede.';
     else if(!report.enabled)monitorSummary.textContent='O firmware respondeu, mas a rede CAN ainda não está configurada neste hub.';
+    else if(firmwareActions?.reason&&actionReason[firmwareActions.reason])monitorSummary.textContent=actionReason[firmwareActions.reason];
+    else if(deployment.state==='failed')monitorSummary.textContent='A implantação foi interrompida. Retome o envio para continuar do último trecho confirmado.';
+    else if(report.deployment_session&&!allConfirmed)monitorSummary.textContent='Implantação em andamento · aguarde a confirmação de cada hub remoto.';
+    else if(report.deployment_session&&allConfirmed)monitorSummary.textContent='Todos os hubs confirmaram o módulo. O início sincronizado está liberado.';
     else monitorSummary.textContent=report.link_state==='conflict'?'A rede respondeu com conflito. Não execute o robô.':'Topologia consultada agora · protocolo v'+(report.protocol_version||'—');
   }
   async function refreshMonitor(){
@@ -125,6 +145,16 @@
     finally{refresh.disabled=false;}
   }
   backdrop.querySelector('#refreshHubs').onclick=refreshMonitor;
+  resumeMultiHub.onclick=async()=>{
+    try{resumeMultiHub.disabled=true;const report=await window.axTransport.resumeMultiHub();monitorSummary.textContent='Envio CAN retomado a partir do último trecho confirmado · transferência '+report.transfer_id+'.';}
+    catch(error){monitorSummary.textContent=error.message;}
+    finally{resumeMultiHub.disabled=false;}
+  };
+  startMultiHub.onclick=async()=>{
+    try{startMultiHub.disabled=true;const report=await window.axTransport.startMultiHub();monitorSummary.textContent='Início sincronizado agendado · projeto CAN '+report.project_id+'.';}
+    catch(error){monitorSummary.textContent=error.message;}
+    finally{startMultiHub.disabled=false;}
+  };
 
   const hardwareBlocks = new Set([
     'axioma_motor_speed','axioma_motor_stop','axioma_stop_all','axioma_servo_angle',
@@ -239,7 +269,7 @@
     return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+': '+pythonLiteral(item)).join(', ')+'}';
   };
   const localModuleSource=module=>[
-    '# Arquivo gerado pelo Axioma Studio — plano local não executável.',
+    '# Arquivo gerado pelo EVORA Studio — plano local não executável.',
     '# Não edite: o compilador de fluxo distribuirá a execução em uma próxima versão.',
     'from axioma_distributed_runtime import LocalPlanRuntime, AxiomaOperationAdapter',
     '',
@@ -342,6 +372,15 @@
       ports:[...project().config],ports_by_hub:n.hubs.map(h=>({hub_id:h.id,ports:[...portsForHub(project(),h.id)]})),assets:{audio:[...audio.keys()],images:[...images.keys()]},
       compiler:{version:2,status:plan?.error?'invalid':'partitioned',executable:false},plan,ready:false};
   };
+
+  function deploymentPayload(manifest){
+    const plan=distributedPlan();
+    if(!plan)throw Error('Use exatamente um bloco Início.');
+    if(plan.error)throw Error(plan.error);
+    return {manifest:manifest||axiomaManifest(),modules:plan.modules.map(module=>({hub_id:module.hub_id,envelope:module.envelope}))};
+  }
+  const projectId=()=>Math.max(1,[...String(project().id)].reduce((total,char)=>(total*31+char.charCodeAt(0))%255,0));
+  window.axMultiHub=Object.freeze({enabled:()=>activeId&&network(project()).enabled,deploymentPayload,projectId});
 
   const bundleButton=document.createElement('button');bundleButton.className='btn secondary multihub-only';bundleButton.textContent='Baixar pacote multi-hub';
   download.parentElement.insertBefore(bundleButton,download.nextSibling);

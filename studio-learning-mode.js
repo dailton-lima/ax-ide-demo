@@ -5,7 +5,8 @@
   const sourceToolbox = document.getElementById('toolbox');
   const basicBlocks = {
     'Programa': ['axioma_start', 'axioma_forever'],
-    'Movimento': ['axioma_motor_speed', 'axioma_robot_move', 'axioma_motor_stop', 'axioma_stop_all', 'axioma_encoder_reset'],
+    'Motores': ['axioma_motor_speed', 'axioma_motor_stop', 'axioma_stop_all', 'axioma_servo_angle', 'axioma_encoder_reset'],
+    'Movimento': ['axioma_robot_move', 'axioma_robot_turn', 'axioma_robot_stop'],
     'Sensores': ['axioma_touch', 'axioma_line_value', 'axioma_light_value', 'axioma_pot_value', 'axioma_battery_level', 'axioma_button_pressed', 'axioma_encoder_position'],
     'Ações': ['axioma_wait', 'axioma_wait_seconds', 'axioma_tone', 'axioma_play_wav', 'axioma_show_image', 'axioma_clear_display'],
     'Controle': ['controls_if', 'controls_repeat_ext', 'axioma_wait_until', 'axioma_wait_button'],
@@ -13,7 +14,7 @@
     'Matemática': ['math_number', 'math_arithmetic', 'math_constrain', 'math_random_int'],
     'Texto': ['text', 'text_join', 'text_print']
   };
-  const alwaysVisible = new Set(['Programa', 'Movimento', 'Sensores', 'Ações', 'Controle', 'Variáveis', 'Lógica', 'Matemática', 'Texto']);
+  const alwaysVisible = new Set(['Programa', 'Motores', 'Movimento', 'Sensores', 'Ações', 'Controle', 'Variáveis', 'Lógica', 'Matemática', 'Texto']);
   let level = localStorage.getItem(storageKey) === 'advanced' ? 'advanced' : 'basic';
 
   const modeControl = document.createElement('div');
@@ -44,7 +45,11 @@
     workspace.updateToolbox(filteredToolbox());
     modeControl.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.level === level));
     document.getElementById('status').textContent = level === 'basic' ? 'Modo básico: blocos essenciais' : 'Modo avançado: todos os blocos';
+    window.dispatchEvent(new CustomEvent('evora:block-level', { detail: { level } }));
   };
+
+  // Permite que extensões visuais do editor reconstruam o toolbox atual.
+  window.evoraRefreshToolbox = applyLevel;
   modeControl.querySelectorAll('button').forEach(button => button.onclick = () => {
     level = button.dataset.level; localStorage.setItem(storageKey, level); applyLevel();
   });

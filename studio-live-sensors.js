@@ -21,6 +21,7 @@
         const value = item.error ? 'indisponível' : item.type === 'touch' ? (item.value ? 'pressionado' : 'solto') : String(item.value);
         return `<span class="live-value${item.error ? ' error' : ''}">P${item.port} · ${label(item.type)}: ${value}</span>`;
       }).join('');
+      window.dispatchEvent(new CustomEvent('evora:live-sensors', { detail: { ports: data.ports || [], at: Date.now() } }));
     } catch (_) {
       // A conexão principal já é exibida pelo indicador superior; não poluir a
       // área de programação a cada tentativa falha.

@@ -110,6 +110,7 @@
   }, item => `# ${item.getFieldValue('TEXT').replace(/[\r\n]/g, ' ')}\n`);
 
   const toolbox = document.getElementById('toolbox');
+  const supportsEncoders = window.AXIOMA_HARDWARE_PROFILE?.hardware?.motor_encoder === true;
   const category = name => [...toolbox.querySelectorAll('category')].find(node => node.getAttribute('name') === name);
   const add = (name, types) => {
     const parent = category(name); if (!parent) return;
@@ -122,8 +123,11 @@
     const oldForever=category('Controle')?.querySelector('block[type="axioma_forever"]');
     oldForever?.remove();
     if(programCategory&&!programCategory.querySelector('block[type="axioma_forever"]'))programCategory.insertAdjacentHTML('beforeend','<block type="axioma_forever"></block>');
-    add('Sensores', ['axioma_button_pressed', 'axioma_timer_ms', 'axioma_encoder_position', 'axioma_encoder_angle']);
-    add('Movimento', ['axioma_encoder_reset', 'axioma_move_rotations', 'axioma_move_distance']);
+    add('Sensores', ['axioma_button_pressed', 'axioma_timer_ms']);
+    if (supportsEncoders) {
+      add('Sensores', ['axioma_encoder_position', 'axioma_encoder_angle']);
+      add('Motores', ['axioma_encoder_reset', 'axioma_move_rotations', 'axioma_move_distance']);
+    }
     add('Ações', ['axioma_reset_timer', 'axioma_log', 'axioma_comment']);
     add('Controle', ['axioma_wait_button']);
     const listCategory = category('Listas');
@@ -134,7 +138,7 @@
     }
     const mathCategory = category('Matemática');
     if (mathCategory && !category('Texto')) {
-      mathCategory.insertAdjacentHTML('afterend', '<category name="Texto" categorystyle="variables_category"><block type="text"></block><block type="text_join"></block><block type="text_length"></block><block type="text_isEmpty"></block><block type="text_changeCase"></block><block type="text_trim"></block><block type="text_print"></block></category>');
+      mathCategory.insertAdjacentHTML('afterend', '<category name="Texto" categorystyle="text_category"><block type="text"></block><block type="text_join"></block><block type="text_length"></block><block type="text_isEmpty"></block><block type="text_changeCase"></block><block type="text_trim"></block><block type="text_print"></block></category>');
     }
     workspace.updateToolbox(toolbox);
   };

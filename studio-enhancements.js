@@ -49,10 +49,12 @@
   const libraryModal = createModal('libraryModal', 'Projetos e desafios');
   const libraryBody = $('.mbody', libraryModal);
   const examples = [
-    { id: 'ola', title: 'Primeiros passos', text: 'Exibe uma ação simples e toca um som.', challenge: 'Faça o robô tocar um som diferente.', build: () => [{ type: 'axioma_tone', fields: { FREQ: 660, DURATION: 250 } }] },
-    { id: 'andar', title: 'Robô em movimento', text: 'Move dois motores e para com freio.', challenge: 'Faça o robô andar para trás por dois segundos.', build: () => [{ type: 'axioma_motor_stop_mode', fields: { PORT: '1', BRAKE: 'True' } }, { type: 'axioma_robot_move', fields: { LEFT: '1', RIGHT: '2', SPEED: 60 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_stop_all' }] },
-    { id: 'toque', title: 'Reação ao toque', text: 'Configura P1 como toque e aguarda o botão.', challenge: 'Faça um som quando o sensor for pressionado.', config: ['touch', 'none', 'none', 'none', 'none', 'none'], build: () => [{ type: 'axioma_wait_until', value: { COND: { type: 'axioma_touch', fields: { PORT: '1' } } } }, { type: 'axioma_tone', fields: { FREQ: 880, DURATION: 180 } }] },
-    { id: 'linha', title: 'Leitura de linha', text: 'Declara P1 como sensor de linha para explorar o valor.', challenge: 'Use “se” para reagir a uma leitura baixa.', config: ['line', 'none', 'none', 'none', 'none', 'none'], build: () => [] }
+    { id: 'rover', title: 'Rover explorador', text: 'Avança em linha reta, freia e confirma a chegada com um som.', challenge: 'Altere velocidade e duração para chegar a uma marca.', difficulty: 'Iniciante', hardware: '2 motores', theme: 'Movimento', build: () => [{ type: 'axioma_motor_stop_mode', fields: { PORT: '1', BRAKE: 'True' } }, { type: 'axioma_motor_stop_mode', fields: { PORT: '2', BRAKE: 'True' } }, { type: 'axioma_robot_move', fields: { LEFT: '1', RIGHT: '2', SPEED: 55 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 2 } }, { type: 'axioma_stop_all' }, { type: 'axioma_tone', fields: { FREQ: 660, DURATION: 180 } }] },
+    { id: 'giro', title: 'Robô que gira', text: 'Usa sentidos opostos nos motores para fazer um giro sobre o próprio eixo.', challenge: 'Ajuste o tempo para chegar o mais perto possível de 90°.', difficulty: 'Iniciante', hardware: '2 motores', theme: 'Movimento', build: () => [{ type: 'axioma_motor_speed', fields: { PORT: '1', SPEED: 55 } }, { type: 'axioma_motor_speed', fields: { PORT: '2', SPEED: -55 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_stop_all' }] },
+    { id: 'dancarino', title: 'Robô dançarino', text: 'Combina avanço, recuo, giro e som em uma pequena coreografia.', challenge: 'Crie um segundo passo e repita a dança.', difficulty: 'Intermediário', hardware: '2 motores + áudio', theme: 'Criatividade', build: () => [{ type: 'axioma_robot_move', fields: { LEFT: '1', RIGHT: '2', SPEED: 65 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_robot_move', fields: { LEFT: '1', RIGHT: '2', SPEED: -55 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_motor_speed', fields: { PORT: '1', SPEED: 60 } }, { type: 'axioma_motor_speed', fields: { PORT: '2', SPEED: -60 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_stop_all' }, { type: 'axioma_tone', fields: { FREQ: 784, DURATION: 240 } }] },
+    { id: 'guardiao', title: 'Guardião de toque', text: 'Espera um sensor de toque e dispara uma reação sonora segura.', challenge: 'Adicione movimento antes do alarme e pare ao detectar toque.', difficulty: 'Intermediário', hardware: 'Sensor de toque', theme: 'Sensores', config: ['touch', 'none', 'none', 'none', 'none', 'none'], build: () => [{ type: 'axioma_wait_until', value: { COND: { type: 'axioma_touch', fields: { PORT: '1' } } } }, { type: 'axioma_stop_all' }, { type: 'axioma_tone', fields: { FREQ: 880, DURATION: 280 } }] },
+    { id: 'inclinacao', title: 'Alarme de inclinação', text: 'Usa a IMU interna para perceber quando o robô foi inclinado.', challenge: 'Experimente posições diferentes e crie dois sinais sonoros.', difficulty: 'Intermediário', hardware: 'IMU + áudio', theme: 'Sensores', build: () => [{ type: 'axioma_wait_until', value: { COND: { type: 'axioma_imu_tilted' } } }, { type: 'axioma_tone', fields: { FREQ: 988, DURATION: 350 } }] },
+    { id: 'sinalizador', title: 'Sinalizador com servo', text: 'Move um servo por três posições para criar uma sinalização mecânica.', challenge: 'Transforme o sinalizador em uma cancela automática.', difficulty: 'Iniciante', hardware: '1 servo', theme: 'Mecanismos', build: () => [{ type: 'axioma_servo_angle', fields: { PORT: '1', ANGLE: 20 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_servo_angle', fields: { PORT: '1', ANGLE: 90 } }, { type: 'axioma_wait_seconds', fields: { SECONDS: 1 } }, { type: 'axioma_servo_angle', fields: { PORT: '1', ANGLE: 160 } }] }
   ];
   const completed = () => { try { return new Set(JSON.parse(localStorage.getItem('axioma-studio-challenges-v1') || '[]')); } catch { return new Set(); } };
   const markCompleted = id => { const set = completed(); set.add(id); localStorage.setItem('axioma-studio-challenges-v1', JSON.stringify([...set])); };
@@ -74,6 +76,7 @@
     if (activeId) rememberAssets(activeId);
     const item = fresh(example.title.toLowerCase().replace(/[^a-zà-ÿ0-9]+/gi, '-'));
     item.config = example.config ? [...example.config] : Array(6).fill('none');
+    item.challengeContext = { id: example.id, title: example.title, text: example.challenge };
     projects.push(item); saveNow();
     openProject(item.id);
     workspace.clear();
@@ -95,9 +98,14 @@
     project().workspace = Blockly.serialization.workspaces.save(workspace);
     tagsRender(); axRefreshSensorToolbox?.(); generate(); markDirty(); markCompleted(example.id); renderLibrary();
   };
+  window.EVORA_PROJECT_EXAMPLES = examples;
+  window.evoraInstallExample = id => {
+    const example = typeof id === 'string' ? examples.find(item => item.id === id) : id;
+    if (example) installExample(example);
+  };
   const renderLibrary = () => {
     const done = completed();
-    libraryBody.innerHTML = `<p class="notice">Use estes projetos como ponto de partida. Eles abrem como um novo programa editável e não substituem seu trabalho atual.</p><div class="challenge-progress">${examples.map(item => `<span class="challenge-chip ${done.has(item.id) ? 'done' : ''}">${done.has(item.id) ? '✓ ' : ''}${item.title}</span>`).join('')}</div><div class="feature-grid">${examples.map(item => `<article class="feature-card"><h3>${item.title}</h3><p>${item.text}</p><p><b>Desafio:</b> ${item.challenge}</p><button class="btn primary" data-example="${item.id}">Abrir exemplo</button></article>`).join('')}</div>`;
+    libraryBody.innerHTML = `<p class="notice">Use estes projetos como ponto de partida. Eles abrem como um novo projeto editável e não substituem seu trabalho atual.</p><div class="challenge-progress">${examples.map(item => `<span class="challenge-chip ${done.has(item.id) ? 'done' : ''}">${done.has(item.id) ? '✓ ' : ''}${item.title}</span>`).join('')}</div><div class="feature-grid">${examples.map(item => `<article class="feature-card"><h3>${item.title}</h3><p>${item.text}</p><p><b>Desafio:</b> ${item.challenge}</p><button class="btn primary" data-example="${item.id}">Abrir exemplo</button></article>`).join('')}</div>`;
     $$('[data-example]', libraryBody).forEach(button => button.onclick = () => installExample(examples.find(item => item.id === button.dataset.example)));
   };
   renderLibrary();
@@ -105,8 +113,7 @@
   const addFilesActions = () => {
     const head = $('.files-head .files-head-actions') || make('div', { className: 'files-head-actions' });
     if (!head.parentElement) $('.files-head').appendChild(head);
-    head.innerHTML = '<button class="btn secondary" id="openLibrary">Exemplos e desafios</button><button class="btn secondary" id="importProject">Importar projeto</button><input id="importProjectFile" type="file" accept="application/json,.axioma.json" hidden>';
-    $('#openLibrary').onclick = () => openModal(libraryModal);
+    head.innerHTML = '<button class="btn secondary" id="importProject">Importar projeto</button><input id="importProjectFile" type="file" accept="application/json,.axioma.json" hidden>';
     $('#importProject').onclick = () => $('#importProjectFile').click();
     $('#importProjectFile').onchange = async event => {
       const file = event.target.files[0]; if (!file) return;
@@ -146,7 +153,7 @@
       const item = projects.find(project => project.id === card.dataset.file); if (!item) return;
       const actions = make('div', { className: 'file-actions' });
       const rename = make('button', { type: 'button', textContent: 'Renomear' });
-      rename.onclick = event => { event.stopPropagation(); const name = prompt('Novo nome do programa:', item.name); if (!name) return; item.name = clean(name); item.updatedAt = Date.now(); saveNow(); renderFiles(); };
+      rename.onclick = event => { event.stopPropagation(); const name = prompt('Novo nome do projeto:', item.name); if (!name) return; item.name = clean(name); item.updatedAt = Date.now(); saveNow(); renderFiles(); };
       const duplicate = make('button', { type: 'button', textContent: 'Duplicar' }); duplicate.onclick = event => { event.stopPropagation(); duplicateProject(item); };
       const exportButton = make('button', { type: 'button', textContent: 'Exportar' }); exportButton.onclick = event => { event.stopPropagation(); exportProject(item); };
       actions.append(rename, duplicate, exportButton); card.appendChild(actions);
@@ -167,7 +174,7 @@
     ctx.putImageData(image, 0, 0); return canvas.toDataURL('image/png');
   };
   const renderMedia = () => {
-    mediaBody.innerHTML = '<p class="notice">Os arquivos abaixo pertencem ao programa aberto. Áudio é convertido para WAV PCM 16 kHz antes do envio e imagens são convertidas para RGB565 240 × 240.</p><div class="media-library" id="mediaLibraryList"></div>';
+    mediaBody.innerHTML = '<p class="notice">Os arquivos abaixo pertencem ao programa aberto. Áudio é convertido para WAV PCM 16 kHz antes do envio e imagens são convertidas para RGB565 240 × 240.</p><div class="media-import-actions"><label class="btn secondary" for="audioFiles">Adicionar áudio</label><label class="btn secondary" for="imageFiles">Adicionar imagem</label></div><div class="media-library" id="mediaLibraryList"></div>';
     const list = $('#mediaLibraryList', mediaBody);
     const add = (name, kind, data) => {
       const card = make('article', { className: 'media-card' }); card.appendChild(make('b', { textContent: name + (kind === 'audio' ? '.wav' : '.rgb565') }));
@@ -188,7 +195,7 @@
   /* Simulador removido da plataforma: mantido inativo até uma decisão futura. */
   if (false) {
   /* Simulador visual determinístico */
-  const simulatorModal = createModal('simulatorModal', 'Simulador do Axioma Block');
+  const simulatorModal = createModal('simulatorModal', 'Simulador do hub EVORA');
   const simulatorBody = $('.mbody', simulatorModal);
   simulatorBody.innerHTML = `<div class="sim-layout"><section class="sim-robot"><div class="robot-body"><div class="wheel left"><span class="motor-label">A</span></div><div class="wheel right"><span class="motor-label">B</span></div><div class="robot-screen" id="simScreen">Pronto</div></div></section><section class="sim-controls"><div class="row"><button class="btn primary" id="runSimulation">Executar programa</button><button class="btn secondary" id="resetSimulation">Limpar</button></div><label>Sensor de toque P1 <input id="simTouch" type="checkbox"></label><label>Botão do bloco pressionado <select id="simButton"><option value="">Nenhum</option><option value="left">Esquerdo</option><option value="right">Direito</option><option value="center">Central</option><option value="pair">Pareamento</option></select></label><label>Sensor analógico P1 <input id="simAnalog" type="range" min="0" max="4095" value="2048"><span id="simAnalogValue">2048</span></label><label>Bateria <input id="simBattery" type="range" min="0" max="100" value="65"><span id="simBatteryValue">65%</span></label><div class="sim-error hidden" id="simError"></div><div class="sim-console" id="simConsole">Pronto para simular.</div></section></div>`;
   const consoleNode = $('#simConsole', simulatorBody), errorNode = $('#simError', simulatorBody), screenNode = $('#simScreen', simulatorBody);

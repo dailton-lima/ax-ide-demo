@@ -1,0 +1,31 @@
+{
+  "name": "ax-ide-demo",
+  "version": "1.0.0",
+  "description": "IDE web local do hub EVORA. O projeto permite criar programas visuais com Blockly, gerar MicroPython, configurar portas, anexar mídia, simular o programa e transferir o pacote para um hub por Wi-Fi ou armazenamento USB.",
+  "main": "dev-server.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test:static": "node --test tests/ide_static.test.mjs",
+    "test:e2e": "playwright test",
+    "test": "npm run test:static && npm run test:e2e"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dailton-lima/ax-ide-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dailton-lima/ax-ide-demo/issues"
+  },
+  "homepage": "https://github.com/dailton-lima/ax-ide-demo#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2"
+  }
+}
